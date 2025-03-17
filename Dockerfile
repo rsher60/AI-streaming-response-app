@@ -1,5 +1,5 @@
 FROM python:3.10-slim
-LABEL authors="rsherlek"
+LABEL authors="Riddhiman Sherlekar"
 WORKDIR /app
 
 COPY requirements.txt .
