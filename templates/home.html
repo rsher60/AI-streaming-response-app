@@ -1,0 +1,108 @@
+
+{% include 'layout.html' %}
+
+<div class="container mt-5">
+  <h4>
+    Hi there! 👋 I'm an image summarizer. Upload an image, and I'll generate a brief description of its key elements and content. Let's get started!
+  </h4>
+
+  <div>
+    <div class="card text-center mt-3">
+      <div class="card-header">
+        Chat History:
+      </div>
+      <div class="card-body chat-history" id="chatHistory">
+        <!-- auto populate here -->
+        {% for response in chat_responses %}
+
+        <div class="{{ 'chat-message user-input' if loop.index0 is even else 'chat-message ai-response' }}">
+          {{ response.message }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="footer">
+    <div class="input-group mb-3">
+      <input class="form-control" placeholder="upload your file" type="file" name="file" accept=".png, .jpg, .jpeg"     id="userInput">
+      <button class="btn btn-outline-primary" type="button" id="sendButton">Send</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+  var websocketString = '';
+  if (window.location.hostname === '127.0.0.1') {
+    websocketString = "ws://localhost:8000/ws";
+  } else {
+    websocketString=`wss://${window.location.hostname}/ws`
+  }
+
+  var ws = new WebSocket(websocketString);
+
+  var sendButton = document.getElementById("sendButton");
+  var userInput = document.getElementById("userInput");
+  var chatHistory = document.getElementById("chatHistory");
+  var lastUserMessageDiv = null; // Keep track of the last user message div
+  var isNewUserInput = true; // Flag to track when a new user input happens
+
+  ws.onmessage = function(event) {
+    var message = event.data.trim(); // Trim whitespace from the message
+
+    // Check if it's a continuation of the AI's last message or a new one
+    if (lastUserMessageDiv && !isNewUserInput) {
+      var shouldAddSpace = true;
+      var noPrependSpaceChars = [',', '.', '!', '?', ';', ':', "'"];
+
+      if (noPrependSpaceChars.includes(message.charAt(0))) {
+          shouldAddSpace = false;
+      }
+
+      lastUserMessageDiv.textContent += (shouldAddSpace ? " " : "") + message;
+    } else {
+      // It's either a new user input or the first chunk of AI response for the latest input
+      var messageDiv = document.createElement("div");
+      messageDiv.className = "chat-message ai-response"; // Assign class for styling
+      messageDiv.textContent = message;
+      chatHistory.appendChild(messageDiv);
+      lastUserMessageDiv = messageDiv; // Update the reference to the last message div
+      isNewUserInput = false; // Reset the flag as the AI response starts
+    }
+  };
+
+  sendButton.onclick = function() {
+    var file = userInput.files[0];
+
+    if (file) {
+      var reader = new FileReader();
+
+      reader.onload = function(event) {
+        var arrayBuffer = event.target.result; // This is the ArrayBuffer of the file
+
+        var userInputDiv = document.createElement("div");
+        userInputDiv.className = "chat-message user-input"; // Use user-input class for user messages
+        userInputDiv.textContent = "File Uploaded: " + file.name; // Display filename instead of content
+        chatHistory.appendChild(userInputDiv);
+
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        ws.send(arrayBuffer); // Send the ArrayBuffer as bytes
+        userInput.value = ""; // Clear the file input
+        isNewUserInput = true; // Set the flag as it's a new user input
+        lastUserMessageDiv = null; // Prepare for the next message
+      };
+
+      reader.onerror = function(error) {
+        console.error("Error reading file:", error);
+        alert("Error reading file. Please try again.");
+      };
+
+      reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
+    } else {
+      alert("Please select a file to upload.");
+    }
+  };
+</script>

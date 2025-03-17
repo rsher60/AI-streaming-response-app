@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample trial Form</title>
+</head>
+<body>
+    <form action="/get_summary" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".png, .jpg, .jpeg"><br><br>
+        <button type="submit">Summarize Image</button>
+    </form>
+<p>Result of the following operation: {{ result }}</p>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+pandas
+fastapi
+websockets
+uvicorn
+requests
+openai
+python-dotenv
+pillow
+langchain-openai
+langchain-core
+langchain
+langchain-community
+langchain-weaviate
+Jinja2==3.1.2
+python-multipart
